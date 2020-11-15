@@ -1,0 +1,15 @@
+.board {
+  border: 1px solid #ccc;
+  width: 400px;
+  height: 400px;
+}
+
+.board__puzzle {
+  -webkit-box-sizing: border-box;
+          box-sizing: border-box;
+  width: 100px;
+  height: 100px;
+  background-color: yellow;
+  border: 1px solid #ccc;
+}
+/*# sourceMappingURL=scss.css.map */

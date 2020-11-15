@@ -1,7 +1,39 @@
 $border: 1px solid #ccc;
 
-.card {
+.board {
   border: $border;
-  width: 100px;
-  height: 100px;
+  width: 400px;
+  height: 400px;
+  position: relative;
+  margin: auto;
+  margin-top: 25%;
+
+  &__puzzle {
+    box-sizing: border-box;
+    width: 100px;
+    height: 100px;
+    background-color: yellow;
+    border: $border;
+    position: absolute;
+    transition: all 0.5s;
+
+    &_drag {
+      // transition: none;
+      transition-property: none;
+    }
+
+    &:hover {
+      cursor: pointer;
+    }
+  }
+
+  &__puzzle_empty {
+    width: 100px;
+    height: 100px;
+    position: absolute;
+  }
+}
+
+.hide {
+  transform: translateX(-9999px);
 }

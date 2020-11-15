@@ -5,4 +5,4 @@ import './babel';
 import './styles/styles.css';
 import './styles/scss.scss';
 
-console.log('new log2');
+let game = new Puzzle(4);
