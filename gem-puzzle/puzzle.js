@@ -2,24 +2,55 @@ export default class Puzzle {
   elements = {
     playingField: null,
     puzzles: [],
+    sound: null,
   };
   puzzleSize = 100;
 
-  constructor(size = 4) {
+  info = {
+    time: {
+      element: null,
+      value: {
+        startTime: 0,
+        savedTime: 0,
+        differenceTime: 0,
+      },
+    },
+    moves: { element: null, value: 0 },
+    isWin: false,
+    isNewGame: true,
+    cheatMode: false,
+  };
+  storage = {};
+
+  constructor(size = 4, previousGame = null, cheatMode = false) {
+    if (previousGame !== null) this._reStart(previousGame);
+    else this.isNewGame = true;
+    this.info.cheatMode = cheatMode;
     this.size = size;
     this._init();
   }
 
-  start() {}
+  _reStart(previousGame) {
+    this.storage = JSON.parse(previousGame);
+    this.info.isNewGame = false;
+    this.info.moves.value =
+      this.storage['moves'] === undefined ? 0 : this.storage['moves'];
+    this.info.time.value = JSON.parse(this.storage['time']);
+    this.info.time.value.savedTime = this.info.time.value.differenceTime;
+  }
 
   generateRandomPuzzleArray() {
+    if (!this.info.isNewGame) {
+      //return JSON.parse(localStorage.getItem('puzzleArr'));
+      return JSON.parse(this.storage['puzzleArr']);
+    } else if (this.info.cheatMode) {
+      return [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 0, 15];
+    }
     let combinationArr = this._getRandomPuzzle();
     while (!this.isSuccessfulCombination(combinationArr)) {
       console.log('_getRandomPuzzle');
       combinationArr = this._getRandomPuzzle();
     }
-
-    let tempArr = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0];
     return combinationArr;
   }
 
@@ -39,7 +70,13 @@ export default class Puzzle {
         parseInt(element.textContent - 1) * this.puzzleSize === expectedLocation
       );
     });
-    if (isWin) console.log('isWin');
+    if (isWin) {
+      alert(
+        `Ура! Вы решили головоломку за ${this.info.time.element.textContent} и ${this.info.moves.element.textContent} ходов`
+      );
+      let event = new Event('userWon', { bubbles: true });
+      this.elements.playingField.dispatchEvent(event);
+    }
   }
 
   isSuccessfulCombination(combinationArr) {
@@ -61,10 +98,48 @@ export default class Puzzle {
   }
 
   _init() {
+    const mainPart = document.querySelector('.main');
+
+    const timeInfoText = document.createElement('div');
+    timeInfoText.classList.add('info__time_text');
+    timeInfoText.textContent = 'Time';
+
+    this.info.time.element = document.createElement('div');
+    this.info.time.element.classList.add('info__time_value');
+
+    const timeInfo = document.createElement('div');
+    timeInfo.classList.add('info__time');
+    timeInfo.appendChild(timeInfoText);
+    timeInfo.appendChild(this.info.time.element);
+
+    const movesInfoText = document.createElement('div');
+    movesInfoText.classList.add('info__moves_text');
+    movesInfoText.textContent = 'Moves';
+
+    this.info.moves.element = document.createElement('div');
+    this.info.moves.element.classList.add('info__moves_value');
+    this.info.moves.element.textContent = this.info.moves.value;
+
+    const movesInfo = document.createElement('div');
+    movesInfo.classList.add('info__moves');
+    movesInfo.appendChild(movesInfoText);
+    movesInfo.appendChild(this.info.moves.element);
+
+    const info = document.createElement('div');
+    info.classList.add('info');
+    info.appendChild(timeInfo);
+    info.appendChild(movesInfo);
+    mainPart.appendChild(info);
+
     this.elements.playingField = document.createElement('div');
     this.elements.playingField.classList.add('board');
     this.elements.playingField.appendChild(this._createPuzzles());
-    document.body.appendChild(this.elements.playingField);
+    mainPart.appendChild(this.elements.playingField);
+
+    this.elements.sound = document.querySelector('.control-area__sound');
+
+    this._startTimer();
+    this._savePuzzleArray();
   }
 
   _createPuzzles() {
@@ -81,6 +156,7 @@ export default class Puzzle {
 
         puzzleElement.addEventListener('drop', (event) => {
           this._dropListener(event);
+          this._playMusic('sound-drop');
         });
       } else {
         puzzleElement.classList.add('board__puzzle');
@@ -92,6 +168,7 @@ export default class Puzzle {
           requestAnimationFrame(function () {
             event.target.style.visibility = 'hidden';
           });
+          this._playMusic('sound-dragstart');
         });
 
         puzzleElement.addEventListener('dragend', (event) => {
@@ -106,6 +183,7 @@ export default class Puzzle {
 
       puzzleElement.addEventListener('click', (event) => {
         this._move(event.currentTarget.innerText);
+        this._playMusic('sound-click');
       });
 
       this.elements.puzzles.push(puzzleElement);
@@ -146,8 +224,55 @@ export default class Puzzle {
       clickedPuzzle.style.left = tempPuzzleLeft;
       clickedPuzzle.style.top = tempPuzzleTop;
 
+      this.info.moves.element.textContent++;
+      //localStorage.setItem('moves', this.info.moves.textContent);
+      this._saveToLocaleStorage('moves', this.info.moves.element.textContent);
+      this._savePuzzleArray();
       this.isWin();
     }
+  }
+
+  _savePuzzleArray() {
+    let puzzleNumbers = [];
+    for (let i = 0; i < this.elements.puzzles.length; i++) {
+      let value = this.elements.puzzles.find((element) => {
+        return (
+          element.style.top ===
+            `${Math.floor(i / this.size) * this.puzzleSize}px` &&
+          element.style.left === `${(i % this.size) * this.puzzleSize}px`
+        );
+      });
+      if (value !== undefined) {
+        puzzleNumbers.push(value.textContent === '' ? 0 : value.textContent);
+      } else
+        console.log('savePuzzleArray does not find value. Please, check it.');
+    }
+    //localStorage.setItem('puzzleArr', JSON.stringify(puzzleNumbers));
+    this._saveToLocaleStorage('puzzleArr', JSON.stringify(puzzleNumbers));
+  }
+
+  _startTimer() {
+    this.info.time.value.startTime = new Date().getTime();
+    let tInterval = setInterval(() => this._showTime(), 1);
+  }
+
+  _showTime() {
+    let updatedTime = new Date().getTime();
+    let difference =
+      updatedTime -
+      this.info.time.value.startTime +
+      this.info.time.value.savedTime;
+    this.info.time.value.differenceTime = difference;
+
+    var minutes = Math.floor(difference / (1000 * 60));
+    //var minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+    var seconds = Math.floor((difference % (1000 * 60)) / 1000);
+
+    minutes = minutes < 10 ? '0' + minutes : minutes;
+    seconds = seconds < 10 ? '0' + seconds : seconds;
+    this.info.time.element.textContent = `${minutes}:${seconds}`;
+    //localStorage.setItem('time', JSON.stringify(this.info.time.value));
+    this._saveToLocaleStorage('time', JSON.stringify(this.info.time.value));
   }
 
   _isAvailableMoving(currentPuzzle, emptyPuzzle) {
@@ -162,5 +287,20 @@ export default class Puzzle {
         ) ===
       this.puzzleSize
     );
+  }
+  _saveToLocaleStorage(name, value) {
+    this.storage[name] = value;
+    localStorage.setItem('puzzle', JSON.stringify(this.storage));
+  }
+  _playMusic(source) {
+    if (
+      !document
+        .querySelector('.control-area__sound')
+        .classList.contains('sound--on')
+    )
+      return;
+    const audio = document.querySelector(`audio[data-key="${source}"]`);
+    audio.currentTime = 0;
+    audio.play();
   }
 }

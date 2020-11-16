@@ -80,6 +80,10 @@ const plugins = () => {
           from: path.resolve(__dirname, 'gem-puzzle/assets/favicon.ico'),
           to: path.resolve(__dirname, 'dist'),
         },
+        {
+          from: path.resolve(__dirname, 'gem-puzzle/assets/sounds/'),
+          to: path.resolve(__dirname, 'dist'),
+        },
       ],
     }),
     new MiniCssExtractPlugin({
@@ -128,7 +132,7 @@ module.exports = {
         use: cssLoaders('sass-loader'),
       },
       {
-        test: /\.(png|jpg|svg|gif)$/,
+        test: /\.(png|jpg|svg|gif|wav)$/,
         use: ['file-loader'],
       },
       {
