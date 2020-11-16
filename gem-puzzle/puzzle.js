@@ -48,7 +48,6 @@ export default class Puzzle {
     }
     let combinationArr = this._getRandomPuzzle();
     while (!this.isSuccessfulCombination(combinationArr)) {
-      console.log('_getRandomPuzzle');
       combinationArr = this._getRandomPuzzle();
     }
     return combinationArr;
@@ -140,6 +139,7 @@ export default class Puzzle {
 
     this._startTimer();
     this._savePuzzleArray();
+    this._saveToLocaleStorage('moves', this.info.moves.element.textContent);
   }
 
   _createPuzzles() {
@@ -247,7 +247,6 @@ export default class Puzzle {
       } else
         console.log('savePuzzleArray does not find value. Please, check it.');
     }
-    //localStorage.setItem('puzzleArr', JSON.stringify(puzzleNumbers));
     this._saveToLocaleStorage('puzzleArr', JSON.stringify(puzzleNumbers));
   }
 
