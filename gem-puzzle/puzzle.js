@@ -39,22 +39,23 @@ export default class Puzzle {
     this.info.time.value.savedTime = this.info.time.value.differenceTime;
   }
 
-  generateRandomPuzzleArray() {
+  _generateRandomPuzzleArray() {
     if (!this.info.isNewGame) {
-      //return JSON.parse(localStorage.getItem('puzzleArr'));
       return JSON.parse(this.storage['puzzleArr']);
     } else if (this.info.cheatMode) {
       return [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 0, 15];
     }
     let combinationArr = this._getRandomPuzzle();
-    while (!this.isSuccessfulCombination(combinationArr)) {
+    while (!this._isSuccessfulCombination(combinationArr)) {
       combinationArr = this._getRandomPuzzle();
     }
     return combinationArr;
   }
 
   _getRandomPuzzle() {
-    return [...Array(16).keys()].sort(() => Math.random() - 0.5);
+    return [...Array(this.size * this.size).keys()].sort(
+      () => Math.random() - 0.5
+    );
   }
 
   isWin() {
@@ -78,7 +79,7 @@ export default class Puzzle {
     }
   }
 
-  isSuccessfulCombination(combinationArr) {
+  _isSuccessfulCombination(combinationArr) {
     const rowNumber = Math.floor(combinationArr.indexOf(0) / this.size) + 1;
     let sum = 0;
 
@@ -145,7 +146,7 @@ export default class Puzzle {
   _createPuzzles() {
     const fragment = document.createDocumentFragment();
 
-    this.generateRandomPuzzleArray().forEach((value, index, array) => {
+    this._generateRandomPuzzleArray().forEach((value, index, array) => {
       const puzzleElement = document.createElement('div');
       if (value === 0) {
         puzzleElement.classList.add('board__puzzle_empty');
@@ -225,7 +226,6 @@ export default class Puzzle {
       clickedPuzzle.style.top = tempPuzzleTop;
 
       this.info.moves.element.textContent++;
-      //localStorage.setItem('moves', this.info.moves.textContent);
       this._saveToLocaleStorage('moves', this.info.moves.element.textContent);
       this._savePuzzleArray();
       this.isWin();
@@ -264,13 +264,11 @@ export default class Puzzle {
     this.info.time.value.differenceTime = difference;
 
     var minutes = Math.floor(difference / (1000 * 60));
-    //var minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
     var seconds = Math.floor((difference % (1000 * 60)) / 1000);
 
     minutes = minutes < 10 ? '0' + minutes : minutes;
     seconds = seconds < 10 ? '0' + seconds : seconds;
     this.info.time.element.textContent = `${minutes}:${seconds}`;
-    //localStorage.setItem('time', JSON.stringify(this.info.time.value));
     this._saveToLocaleStorage('time', JSON.stringify(this.info.time.value));
   }
 
@@ -287,10 +285,12 @@ export default class Puzzle {
       this.puzzleSize
     );
   }
+
   _saveToLocaleStorage(name, value) {
     this.storage[name] = value;
     localStorage.setItem('puzzle', JSON.stringify(this.storage));
   }
+
   _playMusic(source) {
     if (
       !document

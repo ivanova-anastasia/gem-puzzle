@@ -1,22 +1,5 @@
 import Puzzle from '@/puzzle';
-
-import './babel';
-
-import './styles/styles.css';
 import './styles/scss.scss';
-
-const init = () => {
-  let bodyPart = document.createElement('div');
-  bodyPart.classList.add('main');
-  document.body.appendChild(bodyPart);
-  let game = new Puzzle(4);
-
-  const newGameBtn = document.createElement('button');
-  newGameBtn.classList.add('new-game');
-  //newGameBtn.innerHTML = `<i class="material-icons">'keyboard_hide'</i>`;
-  newGameBtn.textContent = 'New Game';
-  bodyPart.appendChild(newGameBtn);
-};
 
 const Game = {
   properties: {
@@ -27,50 +10,54 @@ const Game = {
   current: null,
 
   init() {
+    const createIconOfTemplate = (name) =>
+      `<i class="material-icons">${name}</i>`;
+
     let bodyPart = document.createElement('div');
     bodyPart.classList.add('main');
     document.body.appendChild(bodyPart);
 
-    const previousGame = localStorage.getItem('puzzle');
+    let previousGame = localStorage.getItem('puzzle');
     this.current =
       previousGame === null
         ? this.createNewGame()
         : this.continueGame(previousGame);
 
-    const newGameBtn = document.createElement('button');
+    let newGameBtn = document.createElement('button');
     newGameBtn.classList.add('control-area__new-game');
     newGameBtn.textContent = 'New Game';
     newGameBtn.addEventListener('click', () => {
       this.createNewGame();
     });
 
-    let audioClick = document.createElement('AUDIO');
-    audioClick.dataset.key = 'sound-click';
-    audioClick.src = 'close-up-white-curtains.wav';
+    let audioClick = this._createAudioElement(
+      'sound-click',
+      'close-up-white-curtains.wav'
+    );
     bodyPart.appendChild(audioClick);
 
-    let audioDragStart = document.createElement('AUDIO');
-    audioDragStart.dataset.key = 'sound-dragstart';
-    audioDragStart.src = 'ES_VoiceClip.wav';
+    let audioDragStart = this._createAudioElement(
+      'sound-dragstart',
+      'ES_VoiceClip.wav'
+    );
     bodyPart.appendChild(audioDragStart);
 
-    let audioDrop = document.createElement('AUDIO');
-    audioDrop.dataset.key = 'sound-drop';
-    audioDrop.src = 'ES_LaseGunshot.wav';
+    let audioDrop = this._createAudioElement(
+      'sound-drop',
+      'ES_LaseGunshot.wav'
+    );
     bodyPart.appendChild(audioDrop);
 
     const soundBtn = document.createElement('button');
     soundBtn.classList.add('control-area__sound');
-    soundBtn.innerHTML = `<i class="material-icons">volume_off</i>`;
+    soundBtn.innerHTML = createIconOfTemplate('volume_off');
     soundBtn.addEventListener('click', (event) => {
       this.properties.sound = !this.properties.sound;
       soundBtn.classList.toggle('sound--on', this.properties.sound);
       if (this.properties.sound)
-        soundBtn.innerHTML = `<i class="material-icons">volume_up</i>`;
-      else soundBtn.innerHTML = `<i class="material-icons">volume_off</i>`;
+        soundBtn.innerHTML = createIconOfTemplate('volume_up');
+      else soundBtn.innerHTML = createIconOfTemplate('volume_off');
     });
-
-    //modal elements
 
     const span = document.createElement('span');
     span.classList.add('close');
@@ -111,7 +98,7 @@ const Game = {
 
     const settingsBtn = document.createElement('button');
     settingsBtn.classList.add('control-area__settings');
-    settingsBtn.innerHTML = `<i class="material-icons">settings</i>`;
+    settingsBtn.innerHTML = createIconOfTemplate('settings');
     settingsBtn.addEventListener('click', (event) => {
       modal.style.display = 'block';
     });
@@ -121,12 +108,18 @@ const Game = {
     controlArea.appendChild(newGameBtn);
     controlArea.appendChild(soundBtn);
     controlArea.appendChild(settingsBtn);
-
     bodyPart.appendChild(controlArea);
 
-    document.addEventListener('userWon', (event) => {
+    document.addEventListener('userWon', () => {
       this.createNewGame();
     });
+  },
+
+  _createAudioElement(dataKey, src) {
+    let audioElement = document.createElement('AUDIO');
+    audioElement.dataset.key = dataKey;
+    audioElement.src = src;
+    return audioElement;
   },
 
   createNewGame(cheatMode = false) {
@@ -138,7 +131,6 @@ const Game = {
   continueGame(puzzleInfo) {
     this.current = new Puzzle(this.properties.size, puzzleInfo);
   },
-  _changeSound(event) {},
 };
 
 Game.init();
