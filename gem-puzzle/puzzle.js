@@ -13,6 +13,7 @@ export default class Puzzle {
         startTime: 0,
         savedTime: 0,
         differenceTime: 0,
+        timerId: null,
       },
     },
     moves: { element: null, value: 0 },
@@ -35,7 +36,13 @@ export default class Puzzle {
     this.info.isNewGame = false;
     this.info.moves.value =
       this.storage['moves'] === undefined ? 0 : this.storage['moves'];
-    this.info.time.value = JSON.parse(this.storage['time']);
+    this.info.time.value = undefined
+      ? null
+      : (() => {
+          let data = JSON.parse(this.storage['time']);
+          clearInterval(data.timerId);
+          return data;
+        })();
     this.info.time.value.savedTime = this.info.time.value.differenceTime;
   }
 
@@ -252,7 +259,8 @@ export default class Puzzle {
 
   _startTimer() {
     this.info.time.value.startTime = new Date().getTime();
-    let tInterval = setInterval(() => this._showTime(), 1);
+    this.info.time.value.timerId = setInterval(() => this._showTime(), 1);
+    this._saveToLocaleStorage('time', JSON.stringify(this.info.time.value));
   }
 
   _showTime() {
